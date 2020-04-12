@@ -1,9 +1,15 @@
 #!/bin/bash
-
-## Sure it can be done in python, but wheres the fun in that.
-##
-## pass in all pins, location file, step width, and forward/reverse through arguments
 #
+
+# pi_stepper.sh
+#
+# Script for controlling a single 28BYJ-48 stepper
+# motor with Raspberry pi GPIO pins.
+#
+# (c) 2020 Jason Charcalla
+#     April 12 2020
+
+
 # Exit Codes:
 #   0 all good
 #   1 Generic fail
@@ -15,14 +21,16 @@ STEP_SLEEP=0.0015
 print_usage() {
 PROG_NAME=$(basename "$0")
 cat <<EOF
-        # All flags are required!
+        # All flags except "-p" are required!
+        #
         # Usage: ${PROG_NAME} -d forward -s 64 -m single -1 12 -2 16 -3 20 -4 21 -p 0.0015
 
         # Standard options:
           -d Step motor direction
 	  -s Number of steps to make
 	  -m Stepper mode (single, half, full)
-          -p Length of pause or sleep between steps. Defaults to 0.0015
+          -p Length of pause or sleep between steps. Defaults to 0.0015, this is helpful for
+             debugging (watching lights) but times >~ "0.1" will not be fast enough for movement.
 
         # ULN2003 controller input options:
         # Each of the four inputs on the stepper motor
@@ -34,6 +42,10 @@ cat <<EOF
           -4 Controller IN4 set to GPIO pin number.  
 EOF
 }
+
+if [ "$#" -le 14 ]; then
+	    print_usage
+fi
 
 while getopts h?d:s:m:p:1:2:3:4: arg ; do
       case $arg in
@@ -80,12 +92,12 @@ single_step () {
   while [ ${i} -le "${STEP_COUNT}" ]
   do
 	  # Energize pin
-	  echo "fireing pin \"${ORDERED_PINS[${fire_pin}]}\""
+	  ## echo "fireing pin \"${ORDERED_PINS[${fire_pin}]}\""
           echo "1" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin}]}"/value
 	  # Sleep
           sleep ${STEP_SLEEP}
 	  # De-energize pin
-	  echo "de-energize pin \"${ORDERED_PINS[${fire_pin}]}\""
+	  ## echo "de-energize pin \"${ORDERED_PINS[${fire_pin}]}\""
           echo "0" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin}]}"/value
 
 	  if [ ${fire_pin} -eq 3 ]
@@ -118,21 +130,21 @@ half_step () {
           if [ ${even_odd} -eq 0 ]
           then
             # Energize pin
-            echo "fireing pin ${ORDERED_PINS[${fire_pin_a}]}"
+            ## echo "fireing pin ${ORDERED_PINS[${fire_pin_a}]}"
             echo "1" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin_a}]}"/value
             sleep ${STEP_SLEEP}
             # De-energize pin
-            echo "de-energize pin ${ORDERED_PINS[${fire_pin_a}]}"
+            ## echo "de-energize pin ${ORDERED_PINS[${fire_pin_a}]}"
             echo "0" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin_a}]}"/value
           else
             # Energize pin
-            echo "fireing pins ${ORDERED_PINS[${fire_pin_a}]} and ${ORDERED_PINS[${fire_pin_b}]}"
+            ## echo "fireing pins ${ORDERED_PINS[${fire_pin_a}]} and ${ORDERED_PINS[${fire_pin_b}]}"
             echo "1" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin_a}]}"/value
             echo "1" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin_b}]}"/value
             # Sleep
             sleep ${STEP_SLEEP}
             # De-energize pin
-            echo "de-energize pins ${ORDERED_PINS[${fire_pin_a}]} and ${ORDERED_PINS[${fire_pin_b}]}"
+            ## echo "de-energize pins ${ORDERED_PINS[${fire_pin_a}]} and ${ORDERED_PINS[${fire_pin_b}]}"
             echo "0" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin_a}]}"/value
             echo "0" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin_b}]}"/value
 
@@ -174,13 +186,13 @@ full_step () {
   while [ ${i} -le "${STEP_COUNT}" ]
   do
           # Energize pin
-          echo "fireing pins ${ORDERED_PINS[${fire_pin_a}]} and ${ORDERED_PINS[${fire_pin_b}]}"
+          ## echo "fireing pins ${ORDERED_PINS[${fire_pin_a}]} and ${ORDERED_PINS[${fire_pin_b}]}"
           echo "1" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin_a}]}"/value
           echo "1" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin_b}]}"/value
           # Sleep
           sleep ${STEP_SLEEP}
           # De-energize pin
-          echo "de-energize pins ${ORDERED_PINS[${fire_pin_a}]} and ${ORDERED_PINS[${fire_pin_b}]}"
+          ## echo "de-energize pins ${ORDERED_PINS[${fire_pin_a}]} and ${ORDERED_PINS[${fire_pin_b}]}"
           echo "0" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin_a}]}"/value
           echo "0" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin_b}]}"/value
 
