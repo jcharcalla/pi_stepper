@@ -100,7 +100,68 @@ single_step () {
 
 
 
-# TODO: Halfstep
+# Halfstep mode
+
+half_step () {
+  # initialze a counter for the while loop itteration
+  i=0
+  # Another counter to determine if we are on an even or odd step
+  even_odd=0
+  # Set the fist pin to fire, this is in refrence to the STEPPER_PINS array
+  fire_pin_a=0
+  fire_pin_b=1
+  while [ ${i} -le "${STEP_COUNT}" ]
+  do
+          # On even steps we energize one pin, on odd we energize two.
+          # fire pins are only +1 on odd steps.
+          if [ ${even_odd} -eq 0 ]
+          then
+            # Energize pin
+            echo "fireing pin ${ORDERED_PINS[${fire_pin_a}]}"
+            echo "1" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin_a}]}"/value
+            sleep ${STEP_SLEEP}
+            # De-energize pin
+            echo "de-energize pin ${ORDERED_PINS[${fire_pin_a}]}"
+            echo "0" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin_a}]}"/value
+          else
+            # Energize pin
+            echo "fireing pins ${ORDERED_PINS[${fire_pin_a}]} and ${ORDERED_PINS[${fire_pin_b}]}"
+            echo "1" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin_a}]}"/value
+            echo "1" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin_b}]}"/value
+            # Sleep
+            sleep ${STEP_SLEEP}
+            # De-energize pin
+            echo "de-energize pins ${ORDERED_PINS[${fire_pin_a}]} and ${ORDERED_PINS[${fire_pin_b}]}"
+            echo "0" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin_a}]}"/value
+            echo "0" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin_b}]}"/value
+
+            if [ ${fire_pin_a} -eq 3 ]
+            then
+                  # Reset back to the first pin in the array
+                  fire_pin_a=0
+            else
+                  fire_pin_a=$(( fire_pin_a + 1 ))
+            fi
+
+            if [ ${fire_pin_b} -eq 3 ]
+            then
+                  # Reset back to the first pin in the array
+                  fire_pin_b=0
+            else
+                  fire_pin_b=$(( fire_pin_b + 1 ))
+            fi
+          fi
+
+          if [ ${even_odd} -eq 1 ]
+          then
+                  # Reset back to zero
+                  even_odd=0
+          else
+                  even_odd=1
+          fi
+          i=$(( i + 1 ))
+  done
+}
 
 # Fullstep mode
 full_step () {
