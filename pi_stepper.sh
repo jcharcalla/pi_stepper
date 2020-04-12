@@ -48,7 +48,7 @@ done
 # Create an array with the pins for each stepper motor
 # and a reverse order array for turning counterclockwise.
 STEPPER_PINS=("${PIN0}" "${PIN1}" "${PIN2}" "${PIN3}")
-FORWARD_PINS=(${STEPPER_PINS[*]}")
+FORWARD_PINS=(${STEPPER_PINS[*]})
 REVERSE_PINS=("${PIN3}" "${PIN2}" "${PIN1}" "${PIN0}")
 
 # Set durration of sleep between steps
