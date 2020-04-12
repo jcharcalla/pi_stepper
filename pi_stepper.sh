@@ -3,62 +3,72 @@
 ## Sure it can be done in python, but wheres the fun in that.
 ##
 ## pass in all pins, location file, step width, and forward/reverse through arguments
+#
+# Exit Codes:
+#   0 all good
+#   1 Generic fail
+#   2 Bad mode selected
 
 print_usage() {
+PROG_NAME=$(basename "$0")
 cat <<EOF
-        Usage: ${PROGNAME}
-        -f Step motor forward.
-        -p Step motor in reverse.
-	-s Number of steps to make
-	-m Stepper mode (single, half, full)
+        # All flags are required!
+        # Usage: ${PROG_NAME} -d forward -s 64 -m single -1 12 -2 16 -3 20 -4 21
+
+        # Standard options:
+          -d Step motor direction
+	  -s Number of steps to make
+	  -m Stepper mode (single, half, full)
+
+        # ULN2003 controller input options:
+        # Each of the four inputs on the stepper motor
+        # controller must be connected to a Raspberry
+        # pi GPIO pin. Define those pins here.
+          -1 Controller IN1 set to GPIO pin number.  
+          -2 Controller IN2 set to GPIO pin number.  
+          -3 Controller IN3 set to GPIO pin number.  
+          -4 Controller IN4 set to GPIO pin number.  
 EOF
-exit 1
 }
 
-while getopts h?frs:m: arg ; do
+while getopts h?d:s:m:1:2:3:4: arg ; do
       case $arg in
-        f) DIRECTION="forward" ;;
-        r) DIRECTION="reverse" ;;
+        d) DIRECTION="${OPTARG}" ;;
         s) STEP_COUNT="${OPTARG}" ;;
         m) MODE="${OPTARG}" ;;
-        h|\?) print_usage; exit ;;
+        1) PIN0=${OPTARG} ;;
+        2) PIN1=${OPTARG} ;;
+        3) PIN2=${OPTARG} ;;
+        4) PIN3=${OPTARG} ;;
+        h|\?) print_usage; exit 1;;
       esac
 done
 
-PIN0=12
-PIN1=16
-PIN2=20
-PIN3=21
 
-
-# Create an array with the pins for each stepper motor.
+# Create an array with the pins for each stepper motor
+# and a reverse order array for turning counterclockwise.
 STEPPER_PINS=(${PIN0} ${PIN1} ${PIN2} ${PIN3})
 FORWARD_PINS=(${STEPPER_PINS[*]})
 REVERSE_PINS=(${PIN3} ${PIN2} ${PIN1} ${PIN0})
 
-# A function for initializing the GPIO pins for each stepper motor
+# Set durration of sleep between steps
+STEP_SLEEP=0.0015
+
+# A function for initializing the GPIO pins for the stepper motor
 stepper_init () {
   for pin in ${STEPPER_PINS[@]}
   do
-	  ### TODO: Check if this has already been exported
-	  # Export pin
-	  echo "${pin}" > /sys/class/gpio/export
+	  # Export GPIO pin if not already done
+          if [ ! -L /sys/class/gpio/gpio${pin} ]
+          then
+ 	    echo "${pin}" > /sys/class/gpio/export
+          fi
 	  # Set pin to output
 	  echo "out" > /sys/class/gpio/gpio${pin}/direction
 	  # Set pin to low
 	  echo "0" > /sys/class/gpio/gpio${pin}/value
-	  #### TODO: Down here we should add something to aling the motor
   done
 }
-
-stepper_init
-
-if [ ${DIRECTION} == "reverse" ]
-then
-  ORDERED_PINS=(${REVERSE_PINS[*]})
-else
-  ORDERED_PINS=(${FORWARD_PINS[*]})
-fi
 
 # Single step mode
 single_step () {
@@ -72,7 +82,7 @@ single_step () {
 	  echo "fireing pin ${ORDERED_PINS[${fire_pin}]}"
           echo "1" > /sys/class/gpio/gpio${ORDERED_PINS[${fire_pin}]}/value
 	  # Sleep
-          sleep 0.0015
+          sleep ${STEP_SLEEP}
 	  # De-energize pin
 	  echo "de-energize pin ${ORDERED_PINS[${fire_pin}]}"
           echo "0" > /sys/class/gpio/gpio${ORDERED_PINS[${fire_pin}]}/value
@@ -88,11 +98,35 @@ single_step () {
   done
 }
 
-## TODO: case statement around this
-single_step
 
 
 # TODO: Halfstep
 
 # TODO: Fullstep
 
+# Run the init function.
+stepper_init
+
+# Set the direction to rotate the motor.
+if [ ${DIRECTION} == "reverse" ]
+then
+  ORDERED_PINS=(${REVERSE_PINS[*]})
+else
+  ORDERED_PINS=(${FORWARD_PINS[*]})
+fi
+
+case ${MODE} in
+  single)
+   single_step ;;
+  half)
+   half_step ;;
+  full)
+   full_step ;;
+  *)
+   echo "ERROR: Invalid mode selected!"
+   print_usage
+   exit 2
+   
+esac
+
+exit 0
