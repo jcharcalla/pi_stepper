@@ -102,7 +102,44 @@ single_step () {
 
 # TODO: Halfstep
 
-# TODO: Fullstep
+# Fullstep mode
+full_step () {
+  # initialze a counter for the while loop itteration
+  i=0
+  # Set the fist pin to fire, this is in refrence to the STEPPER_PINS array
+  fire_pin_a=0
+  fire_pin_b=3
+  while [ ${i} -le ${STEP_COUNT} ]
+  do
+          # Energize pin
+          echo "fireing pins ${ORDERED_PINS[${fire_pin_a}]} and ${ORDERED_PINS[${fire_pin_b}]"
+          echo "1" > /sys/class/gpio/gpio${ORDERED_PINS[${fire_pin_a}]}/value
+          echo "1" > /sys/class/gpio/gpio${ORDERED_PINS[${fire_pin_b}]}/value
+          # Sleep
+          sleep ${STEP_SLEEP}
+          # De-energize pin
+          echo "de-energize pins ${ORDERED_PINS[${fire_pin_a}]} and ${ORDERED_PINS[${fire_pin_b}]"
+          echo "0" > /sys/class/gpio/gpio${ORDERED_PINS[${fire_pin_a}]}/value
+          echo "0" > /sys/class/gpio/gpio${ORDERED_PINS[${fire_pin_b}]}/value
+
+          if [ ${fire_pin_a} -eq 3 ]
+          then
+                  # Reset back to the first pin in the array
+                  fire_pin_a=0
+          else
+                  fire_pin_a=$(( $fire_pin_a + 1 ))
+          fi
+
+          if [ ${fire_pin_b} -eq 3 ]
+          then
+                  # Reset back to the first pin in the array
+                  fire_pin_b=0
+          else
+                  fire_pin_b=$(( $fire_pin_b + 1 ))
+          fi
+          i=$(( $i + 1 ))
+  done
+}
 
 # Run the init function.
 stepper_init
