@@ -47,26 +47,26 @@ done
 
 # Create an array with the pins for each stepper motor
 # and a reverse order array for turning counterclockwise.
-STEPPER_PINS=(${PIN0} ${PIN1} ${PIN2} ${PIN3})
-FORWARD_PINS=(${STEPPER_PINS[*]})
-REVERSE_PINS=(${PIN3} ${PIN2} ${PIN1} ${PIN0})
+STEPPER_PINS=("${PIN0}" "${PIN1}" "${PIN2}" "${PIN3}")
+FORWARD_PINS=("${STEPPER_PINS[*]}")
+REVERSE_PINS=("${PIN3}" "${PIN2}" "${PIN1}" "${PIN0}")
 
 # Set durration of sleep between steps
 STEP_SLEEP=0.0015
 
 # A function for initializing the GPIO pins for the stepper motor
 stepper_init () {
-  for pin in ${STEPPER_PINS[@]}
+  for pin in "${STEPPER_PINS[@]}"
   do
 	  # Export GPIO pin if not already done
-          if [ ! -L /sys/class/gpio/gpio${pin} ]
+          if [ ! -L /sys/class/gpio/gpio"${pin}" ]
           then
  	    echo "${pin}" > /sys/class/gpio/export
           fi
 	  # Set pin to output
-	  echo "out" > /sys/class/gpio/gpio${pin}/direction
+	  echo "out" > /sys/class/gpio/gpio"${pin}"/direction
 	  # Set pin to low
-	  echo "0" > /sys/class/gpio/gpio${pin}/value
+	  echo "0" > /sys/class/gpio/gpio"${pin}"/value
   done
 }
 
@@ -76,25 +76,25 @@ single_step () {
   i=0
   # Set the fist pin to fire, this is in refrence to the STEPPER_PINS array
   fire_pin=0
-  while [ ${i} -le ${STEP_COUNT} ]
+  while [ ${i} -le "${STEP_COUNT}" ]
   do
 	  # Energize pin
-	  echo "fireing pin ${ORDERED_PINS[${fire_pin}]}"
-          echo "1" > /sys/class/gpio/gpio${ORDERED_PINS[${fire_pin}]}/value
+	  echo "fireing pin \"${ORDERED_PINS[${fire_pin}]}\""
+          echo "1" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin}]}"/value
 	  # Sleep
           sleep ${STEP_SLEEP}
 	  # De-energize pin
-	  echo "de-energize pin ${ORDERED_PINS[${fire_pin}]}"
-          echo "0" > /sys/class/gpio/gpio${ORDERED_PINS[${fire_pin}]}/value
+	  echo "de-energize pin \"${ORDERED_PINS[${fire_pin}]}\""
+          echo "0" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin}]}"/value
 
 	  if [ ${fire_pin} -eq 3 ]
 	  then
 		  # Reset back to the first pin in the array
 		  fire_pin=0
 	  else
-		  fire_pin=$(( $fire_pin + 1 ))
+		  fire_pin=$(( fire_pin + 1 ))
           fi
-	  i=$(( $i + 1 ))
+	  i=$(( i + 1 ))
   done
 }
 
@@ -109,25 +109,25 @@ full_step () {
   # Set the fist pin to fire, this is in refrence to the STEPPER_PINS array
   fire_pin_a=0
   fire_pin_b=3
-  while [ ${i} -le ${STEP_COUNT} ]
+  while [ ${i} -le "${STEP_COUNT}" ]
   do
           # Energize pin
-          echo "fireing pins ${ORDERED_PINS[${fire_pin_a}]} and ${ORDERED_PINS[${fire_pin_b}]"
-          echo "1" > /sys/class/gpio/gpio${ORDERED_PINS[${fire_pin_a}]}/value
-          echo "1" > /sys/class/gpio/gpio${ORDERED_PINS[${fire_pin_b}]}/value
+          echo "fireing pins ${ORDERED_PINS[${fire_pin_a}]} and ${ORDERED_PINS[${fire_pin_b}]}"
+          echo "1" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin_a}]}"/value
+          echo "1" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin_b}]}"/value
           # Sleep
           sleep ${STEP_SLEEP}
           # De-energize pin
-          echo "de-energize pins ${ORDERED_PINS[${fire_pin_a}]} and ${ORDERED_PINS[${fire_pin_b}]"
-          echo "0" > /sys/class/gpio/gpio${ORDERED_PINS[${fire_pin_a}]}/value
-          echo "0" > /sys/class/gpio/gpio${ORDERED_PINS[${fire_pin_b}]}/value
+          echo "de-energize pins ${ORDERED_PINS[${fire_pin_a}]} and ${ORDERED_PINS[${fire_pin_b}]}"
+          echo "0" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin_a}]}"/value
+          echo "0" > /sys/class/gpio/gpio"${ORDERED_PINS[${fire_pin_b}]}"/value
 
           if [ ${fire_pin_a} -eq 3 ]
           then
                   # Reset back to the first pin in the array
                   fire_pin_a=0
           else
-                  fire_pin_a=$(( $fire_pin_a + 1 ))
+                  fire_pin_a=$(( fire_pin_a + 1 ))
           fi
 
           if [ ${fire_pin_b} -eq 3 ]
@@ -135,9 +135,9 @@ full_step () {
                   # Reset back to the first pin in the array
                   fire_pin_b=0
           else
-                  fire_pin_b=$(( $fire_pin_b + 1 ))
+                  fire_pin_b=$(( fire_pin_b + 1 ))
           fi
-          i=$(( $i + 1 ))
+          i=$(( i + 1 ))
   done
 }
 
@@ -145,11 +145,11 @@ full_step () {
 stepper_init
 
 # Set the direction to rotate the motor.
-if [ ${DIRECTION} == "reverse" ]
+if [ "${DIRECTION}" == "reverse" ]
 then
-  ORDERED_PINS=(${REVERSE_PINS[*]})
+  ORDERED_PINS=("${REVERSE_PINS[*]}")
 else
-  ORDERED_PINS=(${FORWARD_PINS[*]})
+  ORDERED_PINS=("${FORWARD_PINS[*]}")
 fi
 
 case ${MODE} in
@@ -162,8 +162,7 @@ case ${MODE} in
   *)
    echo "ERROR: Invalid mode selected!"
    print_usage
-   exit 2
-   
+   exit 2 ;;
 esac
 
 exit 0
