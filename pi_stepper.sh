@@ -14,6 +14,7 @@
 #   0 all good
 #   1 Generic fail
 #   2 Bad mode selected
+#   3 Invalid argument count
 
 # Set default durration of sleep between steps
 STEP_SLEEP=0.0015
@@ -44,7 +45,9 @@ EOF
 }
 
 if [ "$#" -lt 14 ]; then
+            echo "ERROR: Missing arguments!"
 	    print_usage
+            exit 3
 fi
 
 while getopts h?d:s:m:p:1:2:3:4: arg ; do
