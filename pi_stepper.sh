@@ -43,7 +43,7 @@ cat <<EOF
 EOF
 }
 
-if [ "$#" -le 14 ]; then
+if [ "$#" -lt 14 ]; then
 	    print_usage
 fi
 
