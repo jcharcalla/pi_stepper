@@ -9,16 +9,20 @@
 #   1 Generic fail
 #   2 Bad mode selected
 
+# Set default durration of sleep between steps
+STEP_SLEEP=0.0015
+
 print_usage() {
 PROG_NAME=$(basename "$0")
 cat <<EOF
         # All flags are required!
-        # Usage: ${PROG_NAME} -d forward -s 64 -m single -1 12 -2 16 -3 20 -4 21
+        # Usage: ${PROG_NAME} -d forward -s 64 -m single -1 12 -2 16 -3 20 -4 21 -p 0.0015
 
         # Standard options:
           -d Step motor direction
 	  -s Number of steps to make
 	  -m Stepper mode (single, half, full)
+          -p Length of pause or sleep between steps. Defaults to 0.0015
 
         # ULN2003 controller input options:
         # Each of the four inputs on the stepper motor
@@ -31,8 +35,9 @@ cat <<EOF
 EOF
 }
 
-while getopts h?d:s:m:1:2:3:4: arg ; do
+while getopts h?d:s:m:p:1:2:3:4: arg ; do
       case $arg in
+        p) STEP_SLEEP="${OPTARG}" ;;
         d) DIRECTION="${OPTARG}" ;;
         s) STEP_COUNT="${OPTARG}" ;;
         m) MODE="${OPTARG}" ;;
@@ -44,15 +49,11 @@ while getopts h?d:s:m:1:2:3:4: arg ; do
       esac
 done
 
-
 # Create an array with the pins for each stepper motor
 # and a reverse order array for turning counterclockwise.
 STEPPER_PINS=("${PIN0}" "${PIN1}" "${PIN2}" "${PIN3}")
 FORWARD_PINS=(${STEPPER_PINS[*]})
 REVERSE_PINS=("${PIN3}" "${PIN2}" "${PIN1}" "${PIN0}")
-
-# Set durration of sleep between steps
-STEP_SLEEP=0.0015
 
 # A function for initializing the GPIO pins for the stepper motor
 stepper_init () {
