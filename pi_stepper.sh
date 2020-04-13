@@ -86,6 +86,17 @@ stepper_init () {
   done
 }
 
+# A function to disable the GPIO pins whne we are done.
+stepper_deactivate () {
+  for pin in "${STEPPER_PINS[@]}"
+  do
+          # Export GPIO pin if not already done
+          if [ -L /sys/class/gpio/gpio"${pin}" ]
+          then
+            echo "${pin}" > /sys/class/gpio/unexport
+          fi
+}
+
 # Single step mode
 single_step () {
   # initialze a counter for the while loop itteration
