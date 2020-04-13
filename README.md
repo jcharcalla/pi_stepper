@@ -15,7 +15,7 @@ Note: You may need to set appropriate permisions on the GPIO
         # Usage: pi_stepper.sh -d forward -s 64 -m single -1 12 -2 16 -3 20 -4 21 -p 0.005
 
         # Standard options:
-          -d Step motor direction
+          -d Step motor direction (forward, reverse)
 	  -s Number of steps to make
 	  -m Stepper mode (single, half, full)
           -p Length of pause or sleep between steps. Defaults to 0.0015, this is helpful for 
